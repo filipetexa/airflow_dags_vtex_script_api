@@ -57,10 +57,10 @@ default_args = {
 
 # Definindo a DAG
 dag = DAG(
-    dag_id='dag_update_orders_24h',
+    dag_id='dag_update_catalog_and_pricing_24h',
     default_args=default_args,
     description='A single task DAG that encapsulates the entire process',
-    schedule_interval='0 0 * * *',  # Executa à meia-noite todos os dias
+    schedule_interval='0 1 * * *',  # Executa à meia-noite todos os dias
     catchup=False  # Impede a execução de 'catch-up' para dias passados quando a DAG não foi executada
 )
 

@@ -1,5 +1,6 @@
 import requests
-from mongodb_functions import insert_json_to_collection, clear_collections, validate_mongo_connection
+import logging
+from my_company.common_package.mongodb_functions import insert_json_to_collection, clear_collections, validate_mongo_connection
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -93,23 +94,27 @@ def fetch_catalog_and_pricing(workers, config, mongo_config):
     
     if connection_status:
         # clear collection on mongoDB
-        clear_collections(['products', 'SKUs', 'pricings', 'products'])
+        clear_collections(['products', 'SKUs', 'pricings', 'products'], mongo_config)
         while processed < total_products:
             params = {
                 '_from': index_from,
                 '_to': index_from + 249
             }
             response = requests.get(catalog_endpoint, headers=headers, params=params)
+            
             if response.status_code == 200:
                 data = response.json()
                 product_ids = data.get('data', [])
                 total_products = data.get('range', {}).get('total', 0)
-
+                
+                
                 # Utiliza ThreadPoolExecutor para processar cada produto em uma thread separada
                 with ThreadPoolExecutor(max_workers=workers) as executor:
-                    executor.map(process_product, product_ids)
-                
-                executor.shutdown(wait=True)
+                    logging.info(f"Disparando ThreadPoolExecutor com {workers} workers para processar produtos.")
+                    futures = executor.map(lambda pid: process_product(pid, config, mongo_config), product_ids)
+                    logging.info("Threads disparadas.")
+        
+                logging.info("ThreadPoolExecutor finalizado.")
 
                 processed += len(product_ids)
                 index_from += 250
